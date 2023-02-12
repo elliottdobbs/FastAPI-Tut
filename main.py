@@ -50,7 +50,7 @@ Selection = dict[ # dict containing the user's query argument
 
 
 # QUERY PARAMETERS
-# Need to add the / for query parameters.  See the route (items/)
+# Need to add the / for query parameters.  See the route (/items/)
 # declaring and implementing a function in a function.....   cool.
 # Look at the accepted parameters (passed by the query parameters).  If anything is declared, it gets it, 
 #   if not, it will set to none.
@@ -82,7 +82,8 @@ def query_item_by_parameters(
     }
 
 
-# idk what this does yet..
+# Post request.  To add an item.  Checks if it already exists
+# This is a post, so how does this get a Item passed into the function?  by the body of the request.
 @app.post("/")
 def add_item(item: Item) -> dict[str, Item]:
     if item.id in items:
@@ -90,3 +91,37 @@ def add_item(item: Item) -> dict[str, Item]:
 
     items[item.id] = item
     return {"added": item}
+
+
+@app.put("/items/{item_id}")
+def update(
+    item_id: int,
+    name: str | None = None,
+    price: float | None = None,
+    count: int | None = None
+) -> dict[str, Item]:
+
+    if item_id not in items:
+        HTTPException(status_code=404, detail=f"item with {item_id=} does not exist.")
+    if all(info is None for info in (name, price, count)):
+        raise HTTPException(status_code=400, detail="No parameters provided for the update.")
+    
+    item = items[item_id]
+    if name is not None:
+        item.name = name
+    if price is not None:
+        item.price = price
+    if count is not None:
+        item.count = count
+
+    return {"updated": item}
+
+
+@app.delete("/items/{item_id}")
+def delete_item(item_id: int) -> dict[str, Item]:
+
+    if item_id not in items:
+        raise HTTPException(status_code=404, detail=f"Item with {item_id=} does not exist.")
+    
+    item = items.pop(item_id)
+    return {"deleted": item}
